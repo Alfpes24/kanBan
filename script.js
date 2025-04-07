@@ -6,7 +6,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const taskForm = document.getElementById('taskForm');
     const exportBtn = document.getElementById('exportButton');
     const importBtn = document.getElementById('importButton');
-    const webAppUrl = 'https://script.google.com/macros/s/AKfycbwF2uVfrGTDpTUY9PRKEjZOQwj6rSW7Kthrmgf1IKih4Y82UvNlshULw8FbmCzmUlsl9Q/exec';
+    const webAppUrl = 'const webAppUrl = 'https://script.google.com/macros/s/AKfycbxnmH00crSSxnNvqJcfqSkB6sZnpkzPZKfw6LGnSSqyuRVlBww3iY0w771Sas_XnZhEzQ/exec';
+';
 
     let editingTaskId = null;
 
