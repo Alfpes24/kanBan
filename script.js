@@ -1,126 +1,62 @@
-document.addEventListener('DOMContentLoaded', () => {
-    const modal = document.getElementById('taskModal');
-    const addTaskBtn = document.getElementById('addTaskBtn');
-    const closeModalBtn = document.querySelector('.close-btn');
-    const cancelBtn = document.querySelector('.cancel-btn');
-    const taskForm = document.getElementById('taskForm');
-    const exportBtn = document.getElementById('exportButton');
-    const importBtn = document.getElementById('importButton');
-    const webAppUrl = 'https://script.google.com/macros/s/AKfycbzsU1X9Q6SmO3UtMHsKk0dZKz3YFqi0S12_CKrW0MfKWF_ccan-3sdzG0MG8iFkSh8/exec';
+document.addEventListener("DOMContentLoaded", function () {
+  const webAppUrl = "https://script.google.com/macros/s/AKfycbzsU1X9Q6SmO3UtMHsKk0dZKz3YFqi0S12_CKrW0MfKWF_ccan-3sdzG0MG8iFkSh8/exec"; // <-- tuo link Web App
 
+  const esportaBtn = document.getElementById("export-btn");
+  const importaBtn = document.getElementById("import-btn");
 
-    let editingTaskId = null;
+  esportaBtn.addEventListener("click", () => {
+    try {
+      const taskCards = document.querySelectorAll(".task-card");
+      const tasks = [];
 
-    addTaskBtn.onclick = () => {
-        modal.style.display = 'flex';
-        taskForm.reset();
-        editingTaskId = null;
-    };
+      taskCards.forEach(card => {
+        const titolo = card.querySelector("h3")?.innerText || "";
+        const paragrafi = card.querySelectorAll("p");
+        const categoria = paragrafi[0]?.innerText || "";
+        const scadenza = paragrafi[1]?.innerText || "";
+        const priorita = paragrafi[2]?.innerText || "";
+        const stato = card.closest(".kanban-column").dataset.status || "";
+        const dataAttivita = new Date().toLocaleDateString("it-IT");
 
-    const closeModal = () => {
-        modal.style.display = 'none';
-        taskForm.reset();
-        editingTaskId = null;
-    };
-
-    closeModalBtn.onclick = closeModal;
-    cancelBtn.onclick = closeModal;
-
-    window.onclick = (event) => {
-        if (event.target == modal) closeModal();
-    };
-
-    taskForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-
-        const title = document.getElementById('taskTitle').value;
-        const category = document.getElementById('taskCategory').value;
-        const deadline = document.getElementById('taskDeadline').value;
-        const priority = document.getElementById('taskPriority').value;
-        const status = document.getElementById('taskStatus').value;
-
-        let taskCard;
-
-        if (editingTaskId) {
-            taskCard = document.querySelector(`[data-id='${editingTaskId}']`);
-            if (taskCard) taskCard.remove();
-        } else {
-            editingTaskId = Date.now();
-        }
-
-        taskCard = document.createElement('div');
-        taskCard.classList.add('task-card', status);
-        taskCard.setAttribute('data-id', editingTaskId);
-        taskCard.innerHTML = `
-            <strong>${title}</strong>
-            <p>📂 ${category}</p>
-            <p>📅 ${deadline}</p>
-            <p>🎯 ${priority}</p>
-        `;
-
-        taskCard.addEventListener('click', () => {
-            document.getElementById('taskTitle').value = title;
-            document.getElementById('taskCategory').value = category;
-            document.getElementById('taskDeadline').value = deadline;
-            document.getElementById('taskPriority').value = priority;
-            document.getElementById('taskStatus').value = status;
-            editingTaskId = taskCard.getAttribute('data-id');
-            modal.style.display = 'flex';
+        tasks.push({
+          titolo,
+          categoria,
+          scadenza,
+          priorita,
+          stato,
+          dataAttivita
         });
+      });
 
-        document.querySelector(`#${status} .task-container`).appendChild(taskCard);
-        closeModal();
-    });
+      // Evita i problemi di CORS: nessun headers personalizzato!
+      fetch(webAppUrl, {
+        method: "POST",
+        body: JSON.stringify(tasks),
+      })
+      .then(response => response.text())
+      .then(text => {
+        alert("✅ Esportazione completata: " + text);
+      })
+      .catch(error => {
+        console.error("Errore durante l'esportazione:", error);
+        alert("Errore durante l'esportazione: " + error);
+      });
+    } catch (err) {
+      alert("Errore inatteso: " + err.message);
+    }
+  });
 
-    exportBtn.addEventListener('click', () => {
-        const taskCards = document.querySelectorAll('.task-card');
-        const tasks = [];
-
-        taskCards.forEach(card => {
-            const status = card.classList[1];
-            const [title, category, deadline, priority] = Array.from(card.querySelectorAll('p, strong')).map(el => el.textContent.replace(/^.*?\s/, ''));
-
-            tasks.push({
-                titolo: title,
-                categoria: category,
-                scadenza: deadline,
-                priorita: priority,
-                stato: status,
-                dataAttivita: new Date().toISOString()
-            });
-        });
-
-        fetch(webAppUrl, {
-            method: 'POST',
-            body: JSON.stringify(tasks),
-            headers: { 'Content-Type': 'application/json' }
-        })
-        .then(res => res.text())
-        .then(msg => alert("Esportazione completata: " + msg))
-        .catch(err => alert("Errore durante l'esportazione: " + err));
-    });
-
-    importBtn.addEventListener('click', () => {
-        fetch(webAppUrl)
-            .then(res => res.json())
-            .then(data => {
-                document.querySelectorAll('.task-container').forEach(container => container.innerHTML = '');
-
-                data.forEach(task => {
-                    const card = document.createElement('div');
-                    card.classList.add('task-card', task.stato);
-                    card.setAttribute('data-id', Date.now() + Math.random());
-                    card.innerHTML = `
-                        <strong>${task.titolo}</strong>
-                        <p>📂 ${task.categoria}</p>
-                        <p>📅 ${task.scadenza}</p>
-                        <p>🎯 ${task.priorita}</p>
-                    `;
-                    document.querySelector(`#${task.stato} .task-container`).appendChild(card);
-                });
-
-                alert("Importazione completata");
-            })
-            .catch(err => alert("Errore durante l'importazione: " + err));
-    });
+  importaBtn.addEventListener("click", () => {
+    fetch(webAppUrl)
+      .then(response => response.json())
+      .then(data => {
+        console.log("Dati importati:", data);
+        // Puoi gestire l'importazione visiva delle card se vuoi qui.
+        alert("Dati importati correttamente! (vedi console)");
+      })
+      .catch(err => {
+        console.error("Errore importazione:", err);
+        alert("Errore durante l'importazione: " + err.message);
+      });
+  });
 });
